@@ -1,3 +1,5 @@
+//Made by David Cernak - Dadas1337
+
 #pragma once
 void memcpy64(uint64_t dst, uint64_t src, uint64_t sz) {
 	char inst[] = {
