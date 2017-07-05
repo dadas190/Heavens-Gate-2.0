@@ -95,15 +95,15 @@ uint64_t GetModuleHandle64(wchar_t *name) {
 
 	while (1) {
 		uint64_t tmp;
-		memcpy64((uint64_t)&tmp, ptr + 96, 8);
+		memcpy64((uint64_t)&tmp, ptr + 96, 8); //TMP -> UNICODE_STRING Basename -> Buffer
 		if (!tmp)break;
 		wchar_t kek[32];
-		memcpy64((uint64_t)kek, tmp, 60);
+		memcpy64((uint64_t)kek, tmp, 60); //KEK = Basename
 
-		memcpy64((uint64_t)&tmp, ptr + 48, 8);
+		memcpy64((uint64_t)&tmp, ptr + 48, 8); //TMP = Module Base Address
 		//printf("%llX -> %ws\n", tmp, kek);
 		if (!lstrcmpW(name, kek))return tmp;
-		memcpy64((uint64_t)&ptr, ptr, 8);
+		memcpy64((uint64_t)&ptr, ptr, 8); //PTR -> Flink
 	}
 	return 0;
 }
@@ -210,10 +210,10 @@ uint64_t X64Call(uint64_t proc, uint64_t a, uint64_t b, uint64_t c, uint64_t d) 
 uint64_t MakeUTFStr(char *in) {
 	char *out = (char*)malloc(16);
 
-	*(uint16_t*)(out) = (uint16_t)(strlen(in) * 2);
-	*(uint16_t*)(out + 2) = (uint16_t)((strlen(in) + 1) * 2);
+	*(uint16_t*)(out) = (uint16_t)(strlen(in) * 2); //Length
+	*(uint16_t*)(out + 2) = (uint16_t)((strlen(in) + 1) * 2); //Max Length
 
-	WORD *outstr = (WORD*)calloc(*(uint16_t*)(out + 2), 1);
+	WORD *outstr = (WORD*)calloc(*(uint16_t*)(out + 2), 1); //Buffer
 
 	for (int i = 0; in[i]; i++)outstr[i] = in[i];
 	*(uint64_t*)(out + 8) = (uint64_t)(outstr);
