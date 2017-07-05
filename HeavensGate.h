@@ -222,6 +222,8 @@ uint64_t LoadLibrary64(char *name) {
 	if (!LdrLoadDll)LdrLoadDll = GetProcAddress64(GetModuleHandle64(L"ntdll.dll"), "LdrLoadDll");
 
 	uint64_t handle;
-	X64Call(LdrLoadDll, 0, 0, MakeUTFStr(name), (uint64_t)&handle);
+	uint64_t unicode=MakeUTFStr(name);
+	X64Call(LdrLoadDll, 0, 0, unicode, (uint64_t)&handle);
+	free((void*)unicode);
 	return handle;
 }
