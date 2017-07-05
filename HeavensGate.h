@@ -1,4 +1,7 @@
-//Made by David Cernak - Dadas1337
+/*
+  Made by David Cernak - Dadas1337
+  Donate some Bitcoin: 1LaLSsqSU1woJ72k9FByNjUF7dLzS6u443
+*/
 
 #pragma once
 void memcpy64(uint64_t dst, uint64_t src, uint64_t sz) {
