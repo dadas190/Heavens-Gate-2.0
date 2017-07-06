@@ -21,6 +21,8 @@ Like normal memcpy, but supports 64bit addresses<br><br>
 void <b>GetPEB64(void *peb)</b><br>
 Retrieves pointer to the 64bit PEB (Process Environment Block)<br><br>
 uint64_t <b>MakeUTFStr(char *in)</b><br>
-Converts input string to UNICODE_STRING64 needed for the LdrLoadDll call.<br><br><br>
+Converts input string to UNICODE_STRING64 needed for the LdrLoadDll call.<br><br>
+uint64_t <b>MakeANSIStr(char *in)</b><br>
+Converts input string to ANSI_STRING64 needed for the LdrGetProcedureAddress call.<br><br><br>
 
 Everything is implemented in the HeavensGate.h, Source.cpp contains just some example code.
