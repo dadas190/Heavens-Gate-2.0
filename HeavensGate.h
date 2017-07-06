@@ -108,37 +108,6 @@ uint64_t GetModuleHandle64(wchar_t *name) {
 	return 0;
 }
 
-uint64_t GetProcAddress64(uint64_t dll, char *func) {
-	IMAGE_DOS_HEADER dos;
-	memcpy64((uint64_t)&dos, dll, sizeof(dos));
-
-	IMAGE_NT_HEADERS64 nt;
-	memcpy64((uint64_t)&nt, dll + dos.e_lfanew, sizeof(nt));
-
-	IMAGE_EXPORT_DIRECTORY exp;
-	memcpy64((uint64_t)&exp, dll + nt.OptionalHeader.DataDirectory[0].VirtualAddress, sizeof(exp));
-
-	if (((uint32_t)func & 0xffff) == (uint32_t)func) {
-		DWORD offset;
-		memcpy64((uint64_t)&offset, dll + exp.AddressOfFunctions + (4 * (uint32_t)func), 4);
-		return dll + offset;
-	}
-
-	for (DWORD i = 0; i < exp.NumberOfNames; i++) {
-		DWORD nameptr;
-		memcpy64((uint64_t)&nameptr, dll + exp.AddressOfNames + (4 * i), 4);
-		char name[64];
-		memcpy64((uint64_t)name, dll + nameptr, 64);
-		if (!strcmp(name, func)) {
-			WORD ord;
-			memcpy64((uint64_t)&ord, dll + exp.AddressOfNameOrdinals + (2 * i), 2);
-			uint32_t adr;
-			memcpy64((uint64_t)&adr, dll + exp.AddressOfFunctions + (4 * ord), 4);
-			return dll + adr;
-		}
-	}
-}
-
 uint64_t X64Call(uint64_t proc, uint64_t a, uint64_t b, uint64_t c, uint64_t d) {
 	uint64_t ret;
 	char inst[] = {
@@ -208,6 +177,57 @@ uint64_t X64Call(uint64_t proc, uint64_t a, uint64_t b, uint64_t c, uint64_t d) 
 	return ret;
 }
 
+uint64_t MakeANSIStr(char *in) {
+	char *out = (char*)malloc(16);
+
+	*(uint16_t*)(out) = (uint16_t)(strlen(in)); //Length
+	*(uint16_t*)(out + 2) = (uint16_t)(strlen(in) + 1); //Max Length
+
+	char *outstr = (char*)calloc(*(uint16_t*)(out + 2), 1); //Buffer
+
+	strcpy(outstr, in);
+	*(uint64_t*)(out + 8) = (uint64_t)(outstr);
+	return (uint64_t)out;
+}
+
+uint64_t GetProcAddress64(uint64_t module, char *func) {
+	static uint64_t LdrGetProcedureAddress = 0;
+	if (!LdrGetProcedureAddress) {
+		uint64_t ntdll = GetModuleHandle64(L"ntdll.dll");
+		IMAGE_DOS_HEADER dos;
+		memcpy64((uint64_t)&dos, ntdll, sizeof(dos));
+
+		IMAGE_NT_HEADERS64 nt;
+		memcpy64((uint64_t)&nt, ntdll + dos.e_lfanew, sizeof(nt));
+
+		IMAGE_EXPORT_DIRECTORY exp;
+		memcpy64((uint64_t)&exp, ntdll + nt.OptionalHeader.DataDirectory[0].VirtualAddress, sizeof(exp));
+
+		for (DWORD i = 0; i < exp.NumberOfNames; i++) {
+			DWORD nameptr;
+			memcpy64((uint64_t)&nameptr, ntdll + exp.AddressOfNames + (4 * i), 4);
+			char name[64];
+			memcpy64((uint64_t)name, ntdll + nameptr, 64);
+			if (!strcmp(name, "LdrGetProcedureAddress")) {
+				WORD ord;
+				memcpy64((uint64_t)&ord, ntdll + exp.AddressOfNameOrdinals + (2 * i), 2);
+				uint32_t adr;
+				memcpy64((uint64_t)&adr, ntdll + exp.AddressOfFunctions + (4 * ord), 4);
+				LdrGetProcedureAddress = ntdll + adr;
+				return GetProcAddress64(module, func);
+			}
+		}
+	}
+	uint64_t ansi = MakeANSIStr(func);
+	uint64_t ret;
+	X64Call(LdrGetProcedureAddress, module, ansi, 0, (uint64_t)&ret);
+	
+	free((void*)(*(uint64_t*)(ansi + 8)));
+	free((void*)ansi);
+
+	return ret;
+}
+
 uint64_t MakeUTFStr(char *in) {
 	char *out = (char*)malloc(16);
 
@@ -228,6 +248,9 @@ uint64_t LoadLibrary64(char *name) {
 	uint64_t handle;
 	uint64_t unicode=MakeUTFStr(name);
 	X64Call(LdrLoadDll, 0, 0, unicode, (uint64_t)&handle);
+
+	free((void*)(*(uint64_t*)(unicode + 8)));
 	free((void*)unicode);
+
 	return handle;
 }
