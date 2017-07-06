@@ -166,6 +166,7 @@ uint64_t X64Call(uint64_t proc, uint64_t a, uint64_t b, uint64_t c, uint64_t d) 
 		push rsi
 		mov rsi,&ret
 		mov [rsi],rax
+		pop rsi
 
 		push 0x23
 		push _next_32bit_block
