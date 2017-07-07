@@ -1,9 +1,8 @@
 /*
-  Made by David Cernak - Dadas1337
-  Donate some Bitcoin: 1LaLSsqSU1woJ72k9FByNjUF7dLzS6u443
+Made by David Cernak - Dadas1337
+Donate some Bitcoin : 1LaLSsqSU1woJ72k9FByNjUF7dLzS6u443
 */
 
-#pragma once
 void memcpy64(uint64_t dst, uint64_t src, uint64_t sz) {
 	char inst[] = {
 		/*32bit:
@@ -101,7 +100,7 @@ uint64_t GetModuleHandle64(wchar_t *name) {
 		memcpy64((uint64_t)kek, tmp, 60); //KEK = Basename
 
 		memcpy64((uint64_t)&tmp, ptr + 48, 8); //TMP = Module Base Address
-		//printf("%llX -> %ws\n", tmp, kek);
+
 		if (!lstrcmpW(name, kek))return tmp;
 		memcpy64((uint64_t)&ptr, ptr, 8); //PTR -> Flink
 	}
@@ -190,7 +189,7 @@ uint64_t MakeANSIStr(char *in) {
 	return (uint64_t)out;
 }
 
-uint64_t GetProcAddress64(uint64_t module, char *func) {
+uint64_t GetProcAddress64(uint64_t module, uint64_t func) {
 	static uint64_t LdrGetProcedureAddress = 0;
 	if (!LdrGetProcedureAddress) {
 		uint64_t ntdll = GetModuleHandle64(L"ntdll.dll");
@@ -218,13 +217,15 @@ uint64_t GetProcAddress64(uint64_t module, char *func) {
 			}
 		}
 	}
-	uint64_t ansi = MakeANSIStr(func);
 	uint64_t ret;
-	X64Call(LdrGetProcedureAddress, module, ansi, 0, (uint64_t)&ret);
-	
-	free((void*)(*(uint64_t*)(ansi + 8)));
-	free((void*)ansi);
+	if (func & 0x8000000000000000)X64Call(LdrGetProcedureAddress, module, 0, func & 0xffff, (uint64_t)&ret);
+	else {
+		uint64_t ansi = MakeANSIStr((char*)func);
+		X64Call(LdrGetProcedureAddress, module, ansi, 0, (uint64_t)&ret);
 
+		free((void*)(*(uint64_t*)(ansi + 8)));
+		free((void*)ansi);
+	}
 	return ret;
 }
 
@@ -243,10 +244,10 @@ uint64_t MakeUTFStr(char *in) {
 
 uint64_t LoadLibrary64(char *name) {
 	static uint64_t LdrLoadDll = 0;
-	if (!LdrLoadDll)LdrLoadDll = GetProcAddress64(GetModuleHandle64(L"ntdll.dll"), "LdrLoadDll");
+	if (!LdrLoadDll)LdrLoadDll = GetProcAddress64(GetModuleHandle64(L"ntdll.dll"), (uint64_t)"LdrLoadDll");
 
 	uint64_t handle;
-	uint64_t unicode=MakeUTFStr(name);
+	uint64_t unicode = MakeUTFStr(name);
 	X64Call(LdrLoadDll, 0, 0, unicode, (uint64_t)&handle);
 
 	free((void*)(*(uint64_t*)(unicode + 8)));

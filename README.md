@@ -11,7 +11,7 @@ Retrieves the HANDLE (base address) of a loaded 64bit module<br><br>
 uint64_t <b>LoadLibrary64(char *name)</b><br>
 Loads a 64bit DLL using LdrLoadDll, returns its HANDLE (base address)<br><br>
 uint64_t <b>GetProcAddress64(uint64_t dll, char *func)</b><br>
-Retrieves the address of a function from a 64bit module (ordinals should work too, but untested)<br><br>
+Retrieves the address of a function from a 64bit module (import by ordinals should work too)<br><br>
 uint64_t <b>X64Call(uint64_t proc, uint64_t a, uint64_t b, uint64_t c, uint64_t d)</b><br>
 Calls the specified 64bit function "proc" with arguments a,b,c,d. Only 4 arguments are supported because I don't need more. When calling functions that take less arguments, simply use 0 for the rest.<br><br><br>
 
