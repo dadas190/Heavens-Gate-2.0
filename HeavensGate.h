@@ -218,7 +218,7 @@ uint64_t GetProcAddress64(uint64_t module, uint64_t func) {
 		}
 	}
 	uint64_t ret;
-	if (func & 0x8000000000000000)X64Call(LdrGetProcedureAddress, module, 0, func & 0xffff, (uint64_t)&ret);
+	if ((func & 0xffff)==func)X64Call(LdrGetProcedureAddress, module, 0, func, (uint64_t)&ret);
 	else {
 		uint64_t ansi = MakeANSIStr((char*)func);
 		X64Call(LdrGetProcedureAddress, module, ansi, 0, (uint64_t)&ret);
