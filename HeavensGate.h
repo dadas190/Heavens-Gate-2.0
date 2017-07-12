@@ -3,6 +3,10 @@ Made by David Cernak - Dadas1337
 Donate some Bitcoin : 1LaLSsqSU1woJ72k9FByNjUF7dLzS6u443
 */
 
+#define uint64_t unsigned long long int
+#define uint32_t unsigned
+#define uint16_t unsigned short
+
 void memcpy64(uint64_t dst, uint64_t src, uint64_t sz) {
 	char inst[] = {
 		/*32bit:
@@ -181,15 +185,15 @@ uint64_t X64Call(uint64_t proc, uint64_t a, uint64_t b, uint64_t c, uint64_t d) 
 }
 
 uint64_t MakeANSIStr(char *in) {
-	char *out = (char*)malloc(16);
+	uint32_t len = strlen(in);
+
+	char *out = (char*)VirtualAlloc(0, 17 + len, 0x3000, 0x40);
 
 	*(uint16_t*)(out) = (uint16_t)(strlen(in)); //Length
 	*(uint16_t*)(out + 2) = (uint16_t)(strlen(in) + 1); //Max Length
 
-	char *outstr = (char*)calloc(*(uint16_t*)(out + 2), 1); //Buffer
-
-	strcpy(outstr, in);
-	*(uint64_t*)(out + 8) = (uint64_t)(outstr);
+	strcpy(out+16, in);
+	*(uint64_t*)(out + 8) = (uint64_t)(out+16);
 	return (uint64_t)out;
 }
 
@@ -227,22 +231,22 @@ uint64_t GetProcAddress64(uint64_t module, uint64_t func) {
 		uint64_t ansi = MakeANSIStr((char*)func);
 		X64Call(LdrGetProcedureAddress, module, ansi, 0, (uint64_t)&ret);
 
-		free((void*)(*(uint64_t*)(ansi + 8)));
-		free((void*)ansi);
+		VirtualFree((void*)ansi, 0, MEM_RELEASE);
 	}
 	return ret;
 }
 
 uint64_t MakeUTFStr(char *in) {
-	char *out = (char*)malloc(16);
+	uint32_t len = strlen(in);
 
-	*(uint16_t*)(out) = (uint16_t)(strlen(in) * 2); //Length
-	*(uint16_t*)(out + 2) = (uint16_t)((strlen(in) + 1) * 2); //Max Length
+	char *out = (char*)VirtualAlloc(0, 18 + ((len+1)*2), 0x3000, 0x40);
 
-	WORD *outstr = (WORD*)calloc(*(uint16_t*)(out + 2), 1); //Buffer
+	*(uint16_t*)(out) = (uint16_t)(len*2); //Length
+	*(uint16_t*)(out + 2) = (uint16_t)((len+1)*2); //Max Length
 
-	for (int i = 0; in[i]; i++)outstr[i] = in[i];
-	*(uint64_t*)(out + 8) = (uint64_t)(outstr);
+	WORD *outstr = (WORD*)(out + 16);
+	for (uint32_t i = 0; i <= len; i++)outstr[i] = in[i];
+	*(uint64_t*)(out + 8) = (uint64_t)(out + 16);
 	return (uint64_t)out;
 }
 
@@ -254,8 +258,7 @@ uint64_t LoadLibrary64(char *name) {
 	uint64_t unicode = MakeUTFStr(name);
 	X64Call(LdrLoadDll, 0, 0, unicode, (uint64_t)&handle);
 
-	free((void*)(*(uint64_t*)(unicode + 8)));
-	free((void*)unicode);
+	VirtualFree((void*)unicode, 0, MEM_RELEASE);
 
 	return handle;
 }
