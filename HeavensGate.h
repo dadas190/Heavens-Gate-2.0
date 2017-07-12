@@ -7,10 +7,6 @@ Donate some Bitcoin : 1LaLSsqSU1woJ72k9FByNjUF7dLzS6u443
 #define uint32_t unsigned
 #define uint16_t unsigned short
 
-void xmemcpy(void *dst, void *src, size_t sz) {
-	for (size_t i = 0; i < sz; i++)((char*)dst)[i] = ((char*)src)[i];
-}
-
 void memcpy64(uint64_t dst, uint64_t src, uint64_t sz) {
 	char inst[] = {
 		/*32bit:
@@ -46,7 +42,7 @@ void memcpy64(uint64_t dst, uint64_t src, uint64_t sz) {
 	static char *r = NULL;
 	if (!r) {
 		r = (char*)VirtualAlloc(0, sizeof(inst), 0x3000, 0x40);
-		xmemcpy(r, inst, sizeof(inst));
+		memcpy(r, inst, sizeof(inst));
 	}
 
 	*(uint32_t*)(r + 3) = (uint32_t)(r + 8);
@@ -84,7 +80,7 @@ void GetPEB64(void *peb) {
 	static char *r = NULL;
 	if (!r) {
 		r = (char*)VirtualAlloc(0, sizeof(inst), 0x3000, 0x40);
-		xmemcpy(r, inst, sizeof(inst));
+		memcpy(r, inst, sizeof(inst));
 	}
 
 	*(uint32_t*)(r + 1) = (uint32_t)(peb);
@@ -172,7 +168,7 @@ uint64_t X64Call(uint64_t proc, uint64_t a, uint64_t b, uint64_t c, uint64_t d) 
 	static char *r = NULL;
 	if (!r) {
 		r = (char*)VirtualAlloc(0, sizeof(inst), 0x3000, 0x40);
-		xmemcpy(r, inst, sizeof(inst));
+		memcpy(r, inst, sizeof(inst));
 	}
 
 	*(uint32_t*)(r + 3) = (uint32_t)(r + 8);
@@ -189,14 +185,14 @@ uint64_t X64Call(uint64_t proc, uint64_t a, uint64_t b, uint64_t c, uint64_t d) 
 }
 
 uint64_t MakeANSIStr(char *in) {
-	uint32_t len = lstrlenA(in);
+	uint32_t len = strlen(in);
 
 	char *out = (char*)VirtualAlloc(0, 17 + len, 0x3000, 0x40);
 
-	*(uint16_t*)(out) = (uint16_t)(len); //Length
-	*(uint16_t*)(out + 2) = (uint16_t)(len + 1); //Max Length
+	*(uint16_t*)(out) = (uint16_t)(strlen(in)); //Length
+	*(uint16_t*)(out + 2) = (uint16_t)(strlen(in) + 1); //Max Length
 
-	lstrcpyA(out+16, in);
+	strcpy(out+16, in);
 	*(uint64_t*)(out + 8) = (uint64_t)(out+16);
 	return (uint64_t)out;
 }
@@ -219,7 +215,7 @@ uint64_t GetProcAddress64(uint64_t module, uint64_t func) {
 			memcpy64((uint64_t)&nameptr, ntdll + exp.AddressOfNames + (4 * i), 4);
 			char name[64];
 			memcpy64((uint64_t)name, ntdll + nameptr, 64);
-			if (!lstrcmpA(name, "LdrGetProcedureAddress")) {
+			if (!strcmp(name, "LdrGetProcedureAddress")) {
 				WORD ord;
 				memcpy64((uint64_t)&ord, ntdll + exp.AddressOfNameOrdinals + (2 * i), 2);
 				uint32_t adr;
@@ -241,7 +237,7 @@ uint64_t GetProcAddress64(uint64_t module, uint64_t func) {
 }
 
 uint64_t MakeUTFStr(char *in) {
-	uint32_t len = lstrlenA(in);
+	uint32_t len = strlen(in);
 
 	char *out = (char*)VirtualAlloc(0, 18 + ((len+1)*2), 0x3000, 0x40);
 
