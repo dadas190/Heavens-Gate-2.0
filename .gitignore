@@ -1,3 +1,13 @@
+#Binaries, logs and shitty VS files
+*.db
+*.opendb
+*.exe
+*.suo
+*.log
+*.tlog
+*.obj
+*.pdb
+
 # Windows image file caches
 Thumbs.db
 ehthumbs.db
