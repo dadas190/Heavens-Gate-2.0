@@ -1,7 +1,8 @@
 #Heaven's Gate 2.0
 
-Unable to find any properly implemented/working code that works on Windows 10 (tested on Windows 7 too), I have decided to open the Heaven's Gate on my own.<br>
-Yes, this one is working on an updated Windows 10 (as of 5th July 2017)<br>
+Unable to find any properly implemented/working code that works on Windows 10, I have decided to open the Heaven's Gate on my own.<br>
+Yes, this one is working on an updated Windows 10 (as of 22th July 2017)<br>
+Tested on Windows 7 too<br>
 Now donate some Bitcoin: <b>1LaLSsqSU1woJ72k9FByNjUF7dLzS6u443</b><br><br>
 
 HeavensGate.h includes the following functions:
