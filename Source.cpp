@@ -2,15 +2,21 @@
 #include <Windows.h>
 
 #include "HeavensGate.h"
+#include "Loader.h"
 
 int main()
 {	
-	uint64_t user32 = LoadLibrary64("user32.dll");
-	uint64_t MessageBoxA = GetProcAddress64(user32, (uint64_t)"MessageBoxA");
-	X64Call(MessageBoxA, 4, (uint64_t)0, (uint64_t)(unsigned)"testing", (uint64_t)(unsigned)"msg", 0);
+	HANDLE f = CreateFile("payload-sockets.exe", GENERIC_READ, 0, 0, OPEN_EXISTING, 0, 0);
+	size_t sz=SetFilePointer(f, 0, 0, FILE_END);
+	SetFilePointer(f, 0, 0, FILE_BEGIN);
 
-	uint64_t kernel32 = GetModuleHandle64(L"kernel32.dll");
-	uint64_t TerminateProcess = GetProcAddress64(kernel32, (uint64_t)"TerminateProcess");
-	X64Call(TerminateProcess, 2, (uint64_t)-1, (uint64_t)0x69);
+	char *buf = (char*)HeapAlloc(GetProcessHeap(), 0, sz);
+	ReadFile(f, buf, sz, 0, 0);
+	CloseHandle(f);
+
+	uint64_t entry;
+	char *base = load64(buf, &entry);
+
+	X64Call(entry, 0);
 	return 0;
 }

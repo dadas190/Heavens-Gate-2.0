@@ -7,6 +7,8 @@
 *.tlog
 *.obj
 *.pdb
+*.iobj
+*.ipdb
 
 # Windows image file caches
 Thumbs.db
