@@ -8,6 +8,8 @@
 *.obj
 *.pdb
 *.iobj
+*.idb
+*.ilk
 *.ipdb
 
 # Windows image file caches
