@@ -223,19 +223,6 @@ uint64_t X64Call(uint64_t proc, unsigned n, ...) {
 	return ret;
 }
 
-uint64_t MakeANSIStr(char *in) {
-	uint32_t len = lstrlenA(in);
-
-	char *out = (char*)VirtualAlloc(0, 17 + len, 0x3000, 0x40);
-
-	*(uint16_t*)(out) = (uint16_t)(len); //Length
-	*(uint16_t*)(out + 2) = (uint16_t)(len + 1); //Max Length
-
-	lstrcpyA(out+16, in);
-	*(uint64_t*)(out + 8) = (uint64_t)(unsigned)(out+16);
-	return (uint64_t)(unsigned)out;
-}
-
 uint64_t MyGetProcAddress(uint64_t module, char *func) {
 	IMAGE_DOS_HEADER dos;
 	memcpy64((uint64_t)(unsigned)(&dos), module, sizeof(dos));
@@ -262,18 +249,15 @@ uint64_t MyGetProcAddress(uint64_t module, char *func) {
 	return 0;
 }
 
-uint64_t MakeUTFStr(char *in) {
-	uint32_t len = lstrlenA(in);
-
-	char *out = (char*)VirtualAlloc(0, 18 + ((len + 1) * 2), 0x3000, 0x40);
+void MakeUTFStr(char *str, char *out) {
+	uint32_t len = lstrlenA(str);
 
 	*(uint16_t*)(out) = (uint16_t)(len * 2); //Length
 	*(uint16_t*)(out + 2) = (uint16_t)((len + 1) * 2); //Max Length
 
 	WORD *outstr = (WORD*)(out + 16);
-	for (uint32_t i = 0; i <= len; i++)outstr[i] = in[i];
+	for (uint32_t i = 0; i <= len; i++)outstr[i] = str[i];
 	*(uint64_t*)(out + 8) = (uint64_t)(unsigned)(out + 16);
-	return (uint64_t)(unsigned)out;
 }
 
 uint64_t GetKernel32() {
@@ -283,8 +267,9 @@ uint64_t GetKernel32() {
 	uint64_t ntdll = GetModuleHandle64(L"ntdll.dll");
 	uint64_t LdrLoadDll = MyGetProcAddress(ntdll, "LdrLoadDll");
 
-	uint64_t str = MakeUTFStr("kernel32.dll");
-	X64Call(LdrLoadDll, 4, (uint64_t)0, (uint64_t)0, str, (uint64_t)(unsigned)(&kernel32));
+	char str[64];
+	MakeUTFStr("kernel32.dll",str);
+	X64Call(LdrLoadDll, 4, (uint64_t)0, (uint64_t)0, (uint64_t)(unsigned)str, (uint64_t)(unsigned)(&kernel32));
 
 	if (!kernel32) {
 		//Windows 7 stuff - based on http://rce.co/knockin-on-heavens-gate-dynamic-processor-mode-switching/
@@ -333,7 +318,6 @@ uint64_t GetKernel32() {
 			memcpy64(ldr + 112, (uint64_t)(unsigned)(&loadcount), 2);
 		}
 	}
-	VirtualFree(str, 0, MEM_RELEASE);
 	return kernel32;
 }
 
